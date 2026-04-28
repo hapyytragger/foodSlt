@@ -25,7 +25,8 @@
     <script>
         const canvas = document.getElementById("wheel");
         const ctx = canvas.getContext("2d");
-        const items = ["제육볶음", "감자탕", "갈비찜", "삼겹살", "곱창전골", "뼈해장국", "돈까스", "불닭", "마라탕", "떡볶이", "요아정", "배라", "던킨"];
+        const items = ["제육볶음", "감자탕", "갈비찜", "삼겹살", "곱창전골", "뼈해장국", "돈까스", "불닭", "마라탕", "떡볶이", "요아정", "배라", "던킨","순대국밥", "순댓국", "김치찌개", "김치찜", "육개장", "육칼", "김밥", "칼국수"," 소머리국밥", "소내장탕", "육회비빔밥", "다온이귀여워", "물냉면"];
+        let currentAngle = 0;
         let currentAngle = 0;
         const arc = Math.PI * 2 / items.length;
         let isSpinning = false;
