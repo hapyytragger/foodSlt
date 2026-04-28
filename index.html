@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>음식 룰렛</title>
+    <style>
+        body { background-color: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; }
+        #resultText { font-size: 80px; font-weight: 900; color: #2ecc71; margin-bottom: 30px; text-shadow: 0 0 30px rgba(46, 204, 113, 0.8); z-index: 10; min-height: 90px; }
+        canvas { cursor: pointer; }
+        button { margin-top: 30px; padding: 20px 60px; font-size: 24px; cursor: pointer; border: none; background: #c0392b; color: white; border-radius: 50px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #e74c3c; transform: scale(1.05); }
+        .firework { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; animation: explode 1s ease-out forwards; }
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="resultText">준비 완료!</div>
+    <canvas id="wheel" width="500" height="500"></canvas>
+    <button onclick="spin()">돌리기</button>
+
+    <script>
+        const canvas = document.getElementById("wheel");
+        const ctx = canvas.getContext("2d");
+        const items = ["제육볶음", "감자탕", "갈비찜", "삼겹살", "곱창전골", "뼈해장국", "돈까스", "불닭", "마라탕", "떡볶이", "요아정", "배라", "던킨"];
+        let currentAngle = 0;
+        const arc = Math.PI * 2 / items.length;
+        let isSpinning = false;
+
+        function draw() {
+            ctx.clearRect(0, 0, 500, 500);
+            items.forEach((item, i) => {
+                const angle = currentAngle + i * arc;
+                ctx.fillStyle = i % 2 === 0 ? "#2c3e50" : "#34495e";
+                ctx.beginPath();
+                ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 240, angle, angle + arc);
+                ctx.fill();
+                ctx.save();
+                ctx.fillStyle = "#ecf0f1";
+                ctx.font = "bold 18px sans-serif";
+                ctx.translate(250 + Math.cos(angle + arc/2) * 160, 250 + Math.sin(angle + arc/2) * 160);
+                ctx.rotate(angle + arc/2 + Math.PI/2);
+                ctx.fillText(item, -ctx.measureText(item).width/2, 0);
+                ctx.restore();
+            });
+            ctx.fillStyle = "#e74c3c";
+            ctx.beginPath(); ctx.moveTo(240, 20); ctx.lineTo(260, 20); ctx.lineTo(250, 40); ctx.fill();
+        }
+
+        function createFireworks() {
+            for (let i = 0; i < 60; i++) {
+                const f = document.createElement("div");
+                f.className = "firework";
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 300 + 100;
+                f.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                f.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+                f.style.left = "50vw"; f.style.top = "50vh";
+                f.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                document.body.appendChild(f);
+                setTimeout(() => f.remove(), 1000);
+            }
+        }
+
+        function spin() {
+            if(isSpinning) return;
+            isSpinning = true;
+
+            // 랜덤 항목 선택
+            const finalIndex = Math.floor(Math.random() * items.length);
+
+            // 포인터(12시, -π/2)가 해당 조각 중앙에 정확히 오도록 목표 각도 계산
+            // 항상 시계 방향(+방향)으로만 회전
+            const sliceCenter = finalIndex * arc + arc / 2;
+            const pointerAngle = -Math.PI / 2;
+
+            const currentMod = ((currentAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+            const targetMod = ((pointerAngle - sliceCenter) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+            let delta = targetMod - currentMod;
+            if (delta <= 0) delta += Math.PI * 2;
+            delta += Math.PI * 2 * 5; // 최소 5바퀴
+
+            const startAngle = currentAngle;
+            const duration = 1500;
+            const startTime = performance.now();
+
+            // 빠르게 출발 후 서서히 감속 (실제 룰렛 느낌)
+            function easeInOut(t) {
+                if (t < 0.2) return (t / 0.2) * (t / 0.2) * 0.5;
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                currentAngle = startAngle + delta * easeInOut(t);
+                draw();
+                if (t < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    currentAngle = startAngle + delta;
+                    draw();
+                    document.getElementById("resultText").innerText = items[finalIndex] + " !!!";
+                    createFireworks();
+                    isSpinning = false;
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        draw();
+    </script>
+</body>
+</html>
